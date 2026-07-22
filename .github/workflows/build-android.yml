@@ -71,9 +71,10 @@ jobs:
             echo "::error::GOOGLE_SERVICES_JSON_BASE64 secret is not set - push notifications will not work in this build. See README for setup."
             exit 1
           fi
+          echo "Secret length received: ${#GOOGLE_SERVICES_JSON_BASE64} chars (expect ~900)"
           # -i ignores stray whitespace/newlines that copy-paste into the
           # GitHub secret UI can introduce, rather than failing outright.
-          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d -i > android/app/google-services.json
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d -i > android/app/google-services.json || true
           if ! python3 -c "import json; json.load(open('android/app/google-services.json'))" 2>/dev/null; then
             echo "::error::GOOGLE_SERVICES_JSON_BASE64 did not decode to valid JSON. Re-copy it with: base64 -w0 google-services.json"
             exit 1
