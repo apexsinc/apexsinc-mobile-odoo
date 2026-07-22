@@ -53,7 +53,15 @@ key forever - back this up somewhere safe (a password manager or secure
 company drive), losing it means you can never update the Play Store
 listing again and would have to publish as a new app.
 
-Generate one (do this once, from any machine with a JDK installed):
+Already done for this repo: `apexsinc-mobile-release.keystore` is committed
+at the repo root (exempted from `.gitignore`'s `*.keystore` rule, since this
+is a private repo and keeping the keystore alongside the code was chosen
+over the usual keep-signing-material-out-of-git practice). **Back this file
+up externally too** - if it's ever lost, you can't publish updates to an
+already-published Play Store app under the same signing identity.
+
+To generate a *new* one instead (e.g. for a different app), from any
+machine with a JDK installed:
 
 ```sh
 keytool -genkeypair -v -keystore release.keystore \
@@ -65,13 +73,13 @@ value) - remember both. Then add these repo secrets:
 
 | Secret name | Value |
 |---|---|
-| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 release.keystore` output |
-| `ANDROID_KEYSTORE_PASSWORD` | the keystore password you set |
+| `ANDROID_KEYSTORE_PASSWORD` | the keystore password |
 | `ANDROID_KEY_ALIAS` | `apexsinc-mobile` (or whatever alias you used) |
-| `ANDROID_KEY_PASSWORD` | the key password you set |
+| `ANDROID_KEY_PASSWORD` | the key password |
 
-Once all four are present, the workflow automatically starts producing
-signed release APK/AAB builds on top of the debug APK.
+Once those three secrets are present (and the keystore file exists in the
+repo), the workflow automatically starts producing signed release APK/AAB
+builds on top of the debug APK.
 
 ### 3. Push notifications end-to-end
 

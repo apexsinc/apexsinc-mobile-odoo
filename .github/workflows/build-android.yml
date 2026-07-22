@@ -108,21 +108,22 @@ jobs:
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 90
 
-      # --- Release build (Play Store) - only runs once signing secrets exist ---
+      # --- Release build (Play Store) - only runs once signing is available ---
+      # The keystore itself is committed to the repo (apexsinc-mobile-release.keystore,
+      # exempted from .gitignore's *.keystore rule) since this is a private repo;
+      # only the passwords/alias remain as GitHub secrets.
       - name: Check for release signing secrets
         id: has_signing
         run: |
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && [ -f apexsinc-mobile-release.keystore ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Decode release keystore
+      - name: Copy release keystore into place
         if: steps.has_signing.outputs.present == 'true'
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d -i > android/app/release.keystore
+        run: cp apexsinc-mobile-release.keystore android/app/release.keystore
 
       - name: Configure release signing
         if: steps.has_signing.outputs.present == 'true'
