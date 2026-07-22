@@ -48,6 +48,9 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android 16 (API 36) platform + build-tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
       - name: Install dependencies
         # npm ci requires an existing package-lock.json (none is committed
         # yet - see the Setup Node.js step above). npm install both installs
@@ -56,6 +59,19 @@ jobs:
 
       - name: Add Android platform
         run: npx cap add android
+
+      - name: Target Android 16 (API 36)
+        # cap add android defaults to whatever compile/target SDK shipped
+        # with the current @capacitor/android release, which lags behind
+        # the newest platform - override it here since variables.gradle
+        # gets regenerated from scratch on every run (nothing to hand-edit
+        # and keep in sync).
+        run: |
+          sed -i \
+            -e 's/compileSdkVersion = [0-9]*/compileSdkVersion = 36/' \
+            -e 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/' \
+            android/variables.gradle
+          grep -E "compileSdkVersion|targetSdkVersion" android/variables.gradle
 
       - name: Generate app icon & splash screen
         run: |
