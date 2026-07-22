@@ -41,7 +41,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          # Newer Android Gradle Plugin versions (pulled in by the latest
+          # @capacitor/android release) require JDK 21, not just 17.
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
