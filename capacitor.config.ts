@@ -24,13 +24,11 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
-    // Without this, Android 15+ (this app targets API 36) renders the
-    // WebView edge-to-edge under the status bar, so fixed top navigation
-    // ends up underneath the clock/wifi/battery icons and can't be
-    // tapped. overlaysWebView: false pushes content down below the
-    // status bar instead of drawing under it.
+    // StatusBar configured for native Edge-to-Edge overlay layout.
+    // Web content handles safe area insets via env(safe-area-inset-top)
+    // in mobile_safe_area.css.
     StatusBar: {
-      overlaysWebView: false,
+      overlaysWebView: true,
       style: 'DARK',
       backgroundColor: '#1b2a2f',
     },
