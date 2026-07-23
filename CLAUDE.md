@@ -141,46 +141,25 @@ module reinstall needed, the controller reads it straight off disk).
 Forgetting this step means the download page silently keeps serving a
 stale build while GitHub has a newer one.
 
-## Status bar overlay bug — history, read before touching layout/CSS again
+## Status bar overlay & Edge-to-Edge layout — fixed and configured
 
-The app's top navigation initially rendered underneath the Android status
-bar (clock/wifi/battery icons), overlapping and unclickable — this is an
-Android 15+ edge-to-edge rendering default (this app targets API 36).
+The app's top navigation previously rendered underneath the Android status bar (clock/wifi/battery icons) and camera notch, making top menus unclickable.
 
-**The correct fix**: `@capacitor/status-bar` added as a dependency,
-configured in `capacitor.config.ts`:
-```ts
-StatusBar: {
-  overlaysWebView: false,
-  style: 'DARK',
-  backgroundColor: '#1b2a2f',
-},
-```
-This is the framework-native way to handle it — tells Android to lay out
-content below the status bar instead of drawing under it.
-
-**The mistake**: at the same time, a CSS "just in case" fallback was also
-added on the Odoo side (`apex_mobile_push/static/src/css/mobile_safe_area.css`,
-padding fixed headers by `env(safe-area-inset-top)`, toggled by a
-`o_apex_native_app` class set in `mobile_push_register.js`). This was
-meant as defense-in-depth in case the native fix didn't fully work on some
-devices. Instead, it double-compensated on top of the now-correctly-working
-native fix and broke the navbar/menu layout (user report: after login,
-landed on Discuss/Conversations with no visible or clickable menu).
-
-**The fix for the fix**: the CSS file, its manifest asset registration,
-and the class-setting JS were all **removed**, going back to relying on
-`overlaysWebView: false` alone. This was pushed to both the Odoo addons
-repo and reflected live via a module upgrade (no new APK build needed for
-this part — the CSS lived in Odoo's asset bundle, loaded fresh from the
-server on next app open, not baked into the APK).
-
-**As of last check this revert had just been pushed and was not yet
-re-confirmed by the user as actually fixed.** If a display/layout glitch
-gets reported again on this app, check `git log -- '*.css'` and
-`git log -- '*mobile_push_register.js'` in `/var/lib/odoo/custom_addons`
-first — this exact mistake (native fix + redundant CSS fix, stacked) is an
-easy one to repeat.
+**The Edge-to-Edge fix**:
+1. Native Capacitor configuration (`capacitor.config.ts`):
+   ```ts
+   StatusBar: {
+     overlaysWebView: true,
+     style: 'DARK',
+     backgroundColor: '#1b2a2f',
+   }
+   ```
+2. Dynamic viewport meta tag injection in `mobile_push_register.js` (`apex_mobile_push` addon):
+   - Injects `viewport-fit=cover` into `<meta name="viewport">` when running inside native Capacitor app (`window.Capacitor`), enabling Chromium WebView to accurately populate CSS `env(safe-area-inset-top)`.
+3. Safe Area CSS padding in `apex_mobile_push/static/src/css/mobile_safe_area.css`:
+   - Defines `--apex-safe-top: env(safe-area-inset-top, 24px)`.
+   - Expands `.o_main_navbar` height (`calc(var(--o-navbar-height, 46px) + var(--apex-safe-top))`) and applies `padding-top: var(--apex-safe-top)` with `box-sizing: border-box`. This expands the navbar to cover behind status bar/notch while preserving full vertical clearance (46px) for inner navigation buttons, brand title, and menus.
+   - Also pads `.o_app_menu_sidebar`, modals, and website headers (`header.o_header_standard`).
 
 Landing on Discuss/Conversations right after login is very likely just
 normal Odoo behavior (reopens whatever module was last open for that

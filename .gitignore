@@ -27,4 +27,6 @@ android/app/google-services.json
 # .github/workflows/build-android.yml - not checked in)
 android/
 ios/
+*.aab
+*.apk
 
